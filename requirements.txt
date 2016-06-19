@@ -1,0 +1,5 @@
+cffi
+git+https://github.com/Rapptz/discord.py@async
+lxml
+requests
+soundcloud
