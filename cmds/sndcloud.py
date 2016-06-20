@@ -2,8 +2,6 @@ import soundcloud
 import asyncio
 import re
 from env import soundcloud_cid
-from threading import Thread
-from threading import Event
 
 _scclient = soundcloud.Client(client_id=soundcloud_cid)
 _currentQuery = []
