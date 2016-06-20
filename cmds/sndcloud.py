@@ -2,17 +2,20 @@ import soundcloud
 import asyncio
 import re
 from env import soundcloud_cid
+from threading import Thread
+from threading import Event
 
 _scclient = soundcloud.Client(client_id=soundcloud_cid)
 _currentQuery = []
 _queue = []
 _player = None
 _commands = ['song named', 'song', 'track', 'next', 'skipall']
+_mainLoop = asyncio.get_event_loop()
 
 name = 'play'
-description = 'In Testing.'
-parameters = ['the command.']
-permissions = ['serverop']
+description = 'Send Shitsuji to get music from soundcloud'
+parameters = ['either of ' + ', '.join(_commands)]
+permissions = []
 
 
 async def handler(*args):
@@ -43,7 +46,7 @@ async def handler(*args):
         await client.edit_message(message, 'Here is what I found at the shop my liege. {0}'.format(songList))
     elif len(params) > 1 and params[0] == _commands[1]:
         track_url = params[1]
-        
+
         try:
             track = _scclient.get('/resolve', url=track_url)
 
@@ -76,10 +79,12 @@ async def handler(*args):
         else:
             await client.send_message(msg.channel, 'I did not shop for music yet, young master.')
     elif len(params) == 1 and params[0] == _commands[3]:
-        _player.stop()
+        if _player is not None:
+            _player.stop()
     elif len(params) == 1 and params[0] == _commands[4]:
         _queue.clear()
-        _player.stop()
+        if _player is not None:
+            _player.stop()
     else:
         message = await client.send_message(msg.channel, 'I am sorry my liege, I did not quite catch that. Did you mean to play {0}?'.format(', '.join(_commands)))
 
@@ -101,7 +106,7 @@ async def dequeueAndPlay(msg, client, vc):
             re.sub(r'(?is)https', '', stream_url.location).strip()
 
         _player = vc.create_ffmpeg_player(stream_url, after=lambda: asyncio.ensure_future(
-            dequeueAndPlay(msg, client, vc), loop=asyncio.get_event_loop()))
+            dequeueAndPlay(msg, client, vc), loop=_mainLoop))
         _player.start()
 
         await client.send_message(msg.channel, 'Next comes {title} from {permalink}'.format(**currentSong))

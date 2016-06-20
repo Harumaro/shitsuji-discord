@@ -7,7 +7,7 @@ from commands import handleCommand
 from env import default_role
 from env import server_id
 from env import vc_id
-from env import lobby_chat_id
+from env import lobby_ch_id
 from env import token
 from env import vc
 
@@ -51,7 +51,7 @@ async def on_member_join(member):
             except:
                 pass
 
-            shitpostingChan = invite.channel if invite else discord.utils.get(member.server.channels, id=lobby_chat_id)
+            shitpostingChan = invite.channel if invite else discord.utils.get(member.server.channels, id=lobby_ch_id)
 
         await client.send_message(shitpostingChan, 'Welcome, young master {0.mention}. Enjoy your stay in Gensokyo. Please head over to #guide for a tour.'.format(member))
     except:

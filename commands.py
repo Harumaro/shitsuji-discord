@@ -3,6 +3,7 @@ import random
 import re
 from datetime import datetime
 from command import Command
+from env import excluded_ch_ids
 
 def hasPermission(user, cmd):
     permissions = cmd.permissions
@@ -54,15 +55,21 @@ async def handleCommand(msg, client, vc):
 
         dtAfter = datetime(2016, 5, 18, 0, 0, 0, 0)
 
-        channel = random.choice(list(msg.server.channels))
+        channel = random.choice(list(filter(lambda channel: channel.id not in excluded_ch_ids, msg.server.channels)))
 
         try:
+            lastSentence = ''
             async for log in client.logs_from(channel, limit=100, before=None, after=dtAfter):
+                lastSentence = log.content
                 if counter == stopAt:
-                    sentence = log.content
+                    sentence = lastSentence
                 else:
                     counter += 1
-        except:
+            if not sentence:
+                sentence = lastSentence
+        except Exception as e:
+            print(e)
             sentence = 'A prayer for Discord, who lost its memes today.'
+            pass
 
         await client.send_message(msg.channel, sentence if sentence != '' else 'I am extremely sorry my Lord, but I couldn\'t find that meme')
