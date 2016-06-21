@@ -2,6 +2,7 @@ import asyncio
 import random
 import re
 from datetime import datetime
+from datetime import timedelta
 from command import Command
 from env import excluded_ch_ids
 
@@ -42,8 +43,8 @@ async def handleCommand(msg, client, vc):
         message += '- <only the bot mention>: show this guide\n'
         message += '- <any text which is not a command>: talk with the bot\n'
         for command in Command.list():
-            message += '- ' + command.name + \
-                ': ' + command.description + '\n'
+            message += '- `' + command.name + \
+                '`: ' + command.description + '\n'
 
         await client.send_message(msg.channel, message)
 
@@ -53,7 +54,9 @@ async def handleCommand(msg, client, vc):
 
         sentence = ''
 
-        dtAfter = datetime(2016, 5, 18, 0, 0, 0, 0)
+        dtInit = datetime(2016, 5, 18, 0, 0, 0, 0)
+        dtNow = datetime.now()
+        dtAfter = dtNow - timedelta(days=random.randint(0, (dtNow-dtInit).days))
 
         channel = random.choice(list(filter(lambda channel: channel.id not in excluded_ch_ids, msg.server.channels)))
 
