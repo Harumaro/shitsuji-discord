@@ -7,11 +7,11 @@ _scclient = soundcloud.Client(client_id=soundcloud_cid)
 players = {}
 
 class PlayerSettings:
-    def __init__:
-        self._currentQuery = []
-        self._lastSong = None
-        self._queue = []
-        self._player = None
+    def __init__(self):
+        self.currentQuery = []
+        self.lastSong = None
+        self.queue = []
+        self.player = None
 
 _commands = ['song named', 'song', 'track', 'next', 'skipall', 'this again']
 _mainLoop = asyncio.get_event_loop()
@@ -40,7 +40,7 @@ async def handler(*args):
         message = await client.send_message(msg.channel, 'I will be off to check the music shop.')
 
         tracks = _scclient.get('/tracks', q=' '.join(params[1:]))
-        players[msg.server.id]._currentQuery.clear()
+        players[msg.server.id].currentQuery.clear()
 
         songList = ''
         for cnt, track in enumerate(tracks):
@@ -48,7 +48,7 @@ async def handler(*args):
                 songList += '\n{0}. {1.title} by {1.user[username]}'.format(
                     cnt, track)
 
-                players[msg.server.id]._currentQuery.append({
+                players[msg.server.id].currentQuery.append({
                     'stream': track.stream_url,
                     'permalink': track.permalink_url,
                     'title': track.title,
@@ -70,7 +70,7 @@ async def handler(*args):
             }
 
             enqueue(msg.server.id, currentSong)
-            if players[msg.server.id]._player is not None and players[msg.server.id]._player.is_playing():
+            if players[msg.server.id].player is not None and players[msg.server.id].player.is_playing():
                 await client.send_message(msg.channel, 'Keeping {title} by {author} for later.'.format(**currentSong))
             else:
                 await dequeueAndPlay(msg, client, vc)
@@ -79,28 +79,28 @@ async def handler(*args):
             pass
 
     elif len(params) > 1 and params[0] == _commands[2]:
-        if players[msg.server.id]._currentQuery:
-            currentSong = players[msg.server.id]._currentQuery[int(params[1])] if params[
+        if players[msg.server.id].currentQuery:
+            currentSong = players[msg.server.id].currentQuery[int(params[1])] if params[
                 1].isdigit() else None
 
             enqueue(msg.server.id, currentSong)
-            if players[msg.server.id]._player is not None and players[msg.server.id]._player.is_playing():
+            if players[msg.server.id].player is not None and players[msg.server.id].player.is_playing():
                 await client.send_message(msg.channel, 'Keeping {title} by {author} for later.'.format(**currentSong))
             else:
                 await dequeueAndPlay(msg, client, vc)
         else:
             await client.send_message(msg.channel, 'I did not shop for music yet, young master.')
     elif len(params) == 1 and params[0] == _commands[3]:
-        if players[msg.server.id]._player is not None:
-            players[msg.server.id]._player.stop()
+        if players[msg.server.id].player is not None:
+            players[msg.server.id].player.stop()
     elif len(params) == 1 and params[0] == _commands[4]:
-        players[msg.server.id]._queue.clear()
-        if _player is not None:
-            players[msg.server.id]._player.stop()
+        players[msg.server.id].queue.clear()
+        if player is not None:
+            players[msg.server.id].player.stop()
     elif len(params) == 2 and ' '.join(params[0:2]) == _commands[5]:
-        enqueue(msg.server.id, players[msg.server.id]._lastSong)
-        if players[msg.server.id]._player is not None and players[msg.server.id]._player.is_playing():
-            await client.send_message(msg.channel, 'Keeping {title} by {author} for later.'.format(**players[msg.server.id]._lastSong))
+        enqueue(msg.server.id, players[msg.server.id].lastSong)
+        if players[msg.server.id].player is not None and players[msg.server.id].player.is_playing():
+            await client.send_message(msg.channel, 'Keeping {title} by {author} for later.'.format(**players[msg.server.id].lastSong))
         else:
             await dequeueAndPlay(msg, client, vc)
     else:
@@ -108,27 +108,27 @@ async def handler(*args):
 
 
 def enqueue(server_id, song):
-    players[msg.server.id]._queue.append(song)
+    global players
 
+    players[server_id].queue.append(song)
 
 async def dequeueAndPlay(msg, client, vc):
     global players
-    global _lastSong
 
-    if players[msg.server.id]._queue:
-        players[msg.server.id]._lastSong = _queue.pop(0)
-        if players[msg.server.id]._player is not None:
-            del players[msg.server.id]._player
-
+    if players[msg.server.id].queue:
+        players[msg.server.id].lastSong = players[msg.server.id].queue.pop(0)
+        if players[msg.server.id].player is not None:
+            del players[msg.server.id].player
+        
         stream_url = _scclient.get(
-            players[msg.server.id]._lastSong['stream'], allow_redirects=False)
+            players[msg.server.id].lastSong['stream'], allow_redirects=False)
         stream_url = 'http' + \
             re.sub(r'(?is)https', '', stream_url.location).strip()
 
-        players[msg.server.id]._player = vc.create_ffmpeg_player(stream_url, after=lambda: asyncio.ensure_future(
+        players[msg.server.id].player = vc.create_ffmpeg_player(stream_url, after=lambda: asyncio.ensure_future(
             dequeueAndPlay(msg, client, vc), loop=_mainLoop))
-        players[msg.server.id]._player.start()
+        players[msg.server.id].player.start()
 
-        await client.send_message(msg.channel, 'Next comes {title} from {permalink}'.format(**players[msg.server.id]._lastSong))
+        await client.send_message(msg.channel, 'Next comes {title} from {permalink}'.format(**players[msg.server.id].lastSong))
     else:
         await client.send_message(msg.channel, 'We are out of songs my liege.')
