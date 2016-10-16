@@ -1,5 +1,5 @@
 cffi
-git+https://github.com/Rapptz/discord.py@async
+discord.py==0.13.0
 lxml
 requests
 soundcloud

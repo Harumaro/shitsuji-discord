@@ -4,7 +4,7 @@ from discord import Game
 name = '.start'
 description = 'Add a status to Shitsuji.'
 parameters = ['what to do.']
-permissions = ['serverop']
+permissions = []
 
 
 async def handler(*args):
@@ -12,4 +12,4 @@ async def handler(*args):
 
     await client.send_message(msg.channel, 'As you wish, my Lord.')
 
-    await client.change_status(game=Game(name=plainTextMsg))
+    await client.change_presence(game=Game(name=plainTextMsg))

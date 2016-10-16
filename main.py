@@ -5,11 +5,10 @@ import os
 import sys
 from commands import handleCommand
 from env import default_role
-from env import server_id
-from env import vc_id
 from env import lobby_ch_id
 from env import token
-from env import vc
+
+vc = {}
 
 if sys.platform == 'win32':
     os.environ['PATH'] += os.path.dirname(__file__) + os.pathsep + 'bin'
@@ -27,41 +26,45 @@ async def on_ready():
     print(client.user.id)
     print('------')
 
-    server = discord.utils.get(client.servers, id=server_id)
-    channel = discord.utils.get(server.channels, id=vc_id, type=discord.ChannelType.voice)
+    for server in client.servers:
+        try:
+            channel = discord.utils.get(server.channels, type=discord.ChannelType.voice)
 
-    vc = await client.join_voice_channel(channel)
-    await client.change_status(game=discord.Game(name='unko'))
+            vc[server.id] = await client.join_voice_channel(channel)
+        except:
+            vc[server.id] = None
 
+    await client.change_presence(game=discord.Game(name='ready for duty'))
+
+@client.event
+async def on_server_join(server):
+    global vc
+    
+    try:
+        channel = discord.utils.get(server.channels, type=discord.ChannelType.voice)
+
+        vc[server.id] = await client.join_voice_channel(channel)
+    except:
+        vc[server.id] = None
 
 @client.event
 async def on_member_join(member):
+    lobbyCh = discord.utils.get(member.server.channels, id=lobby_ch_id)
+
     try:
         if default_role:
-            resident_role = [discord.utils.get(member.server.roles, name=default_role)]
+            def_role = [discord.utils.get(member.server.roles, name=default_role)]
 
-            await client.add_roles(member, *resident_role)
+            await client.add_roles(member, *def_role)
 
-            invite = None
-            try:
-                invites = await client.invites_from(member.server)
-
-                if invites:
-                    invite = random.choice(invites)
-            except:
-                pass
-
-            shitpostingChan = invite.channel if invite else discord.utils.get(member.server.channels, id=lobby_ch_id)
-
-        await client.send_message(shitpostingChan, 'Welcome, young master {0.mention}. Enjoy your stay in Gensokyo. Please head over to #guide for a tour.'.format(member))
+        await client.send_message(lobbyCh, 'Welcome, young master {0.mention}. Enjoy your stay in Gensokyo. Please head over to #guide for a tour.'.format(member))
     except:
-        await client.send_message(shitpostingChan, 'Welcome, young master {0.mention}. I apologize I cannot offer you a proper welcome, please ask any of the other young masters.'.format(member))
+        await client.send_message(lobbyCh, 'Welcome, young master {0.mention}. I apologize I cannot offer you a proper welcome, please ask any of the other young masters.'.format(member))
 
 
 @client.event
 async def on_message(message):
-
     if client.user.mentioned_in(message):
-        await handleCommand(message, client, vc)
+        await handleCommand(message, client, vc[message.server.id])
 
 client.run(token)

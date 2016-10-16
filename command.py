@@ -5,6 +5,7 @@ import cmds.hentaibingo
 import cmds.gayfinder
 import cmds.changestatus
 import cmds.sndcloud
+import cmds.setoption
 
 
 class Command:
